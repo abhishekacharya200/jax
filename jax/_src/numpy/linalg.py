@@ -301,7 +301,9 @@ def svd(
     w, v = lax_linalg.eigh(a, subset_by_index=subset_by_index)
     s = lax.abs(v)
     if compute_uv:
-      sign = lax.sign(v)
+      # copysign rather than sign, as NumPy does: sign(0) is 0, which would zero
+      # out the singular vector of a zero eigenvalue.
+      sign = ufuncs.copysign(lax.full_like(v, 1), v)
       idx_dtype = lax_utils.int_dtype_for_dim(
           s.shape[s.ndim - 1], signed=False)
       idxs = lax.broadcasted_iota(idx_dtype, s.shape, dimension=s.ndim - 1)
